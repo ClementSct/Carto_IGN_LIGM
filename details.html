@@ -214,13 +214,19 @@
                     code_postal = ' (' + objId.properties.code_act + ')';
                 }
                 
+                // Réunion des catégories dans la même (détails)
+                var classe = objId.properties.nom_classe
+                if(classe == 'Aucun' || 'Non renseigné' || 'Informations incompletes'){
+                    classe = 'Informations manquantes';
+                }
+
                 var ht = '<p>Entreprise : ' + objId.properties.nom_site + '</p>' + '</br>' +
                     '<p>Région : ' + objId.properties.region + '</p>' + '</br>' +
                     '<p>Commune : ' + objId.properties.commune + ' (' + objId.properties.dpt + ')' + '</p>' + '</br>' +
                     '<p>Adresse : ' + objId.properties.adresse + code_postal + '</p>' + '</br>' +
                     '<p>Activité : ' + objId.properties.activite + ' (' + objId.properties.code_act + ')' + '</p>' + '</br>' +
                     '<p> Description du site : ' + objId.properties.descrip + '</p>' + '</br>' +
-                    '<p>Polluants : ' + objId.properties.nom_classe + '</p>' + '</br>' +
+                    '<p>Polluants : ' + classe + '</p>' + '</br>' +
                     '<p>Type de pollution : ' + objId.properties.type_pollu.replace("{", "").replace("}", "").replace(/'/g, "") + '</p>' + '</br>' +
                     '<p>Origine de la pollution : ' + objId.properties.origine_pollution + '</p>';
                 document.getElementById("siteInfo").innerHTML = ht;
