@@ -10,6 +10,7 @@ var entreprisesParCommune = { "": {} };
 var pollutionParRegion = { "": {} };
 var pollutionParDpt = { "": {} };
 var pollutionParCommune = { "": {} };
+var entrepriseParPollution = { "": {} };
 
 
 
@@ -68,8 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 ensCommune[element.properties.commune] = 0
                 ensPollution[element.properties.nom_classe] = 0
                 ensEntreprise[element.properties.nom_site] = 0
-                
-                // ensPollution[element.properties.nom_classe] = 0
 
                 if (element.properties.nom_classe != "Non renseigné") {
                     element.properties.nom_classe.forEach(function(e) {
@@ -142,6 +141,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 entreprisesParCommune[element.properties.commune][element.properties.nom_site] = 0;
                 entreprisesParCommune[""][element.properties.nom_site] = 0;
+
+                // Mise à jour de la liste des entreprises par pollution   
+                if (!(element.properties.nom_classe in entrepriseParPollution)) {
+                    entrepriseParPollution[element.properties.nom_classe] = {};
+                }
+
+                entrepriseParPollution[element.properties.nom_classe][element.properties.nom_site] = 0;
+                entrepriseParPollution[""][element.properties.nom_site] = 0;
 
                 // DESCRIPTION
                 //Chargement de la description complète au lieu de l'abrégée

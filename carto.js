@@ -84,6 +84,15 @@ var Geologie = L.tileLayer.wms('http://geoservices.brgm.fr/WMS-C/?', {
 
 var error = document.querySelector(".error");
 
+// Style des clusters de départ :
+var styleSmall = document.createElement('style');
+styleSmall.innerHTML = '.marker-cluster { background-color: #bfbdbd !important; }';
+document.head.appendChild(styleSmall);
+
+var styleSmallDiv = document.createElement('style');
+styleSmallDiv.innerHTML = '.marker-cluster div { background-color: #999999 !important; color: #fff !important; }';
+document.head.appendChild(styleSmallDiv);
+
 // Map de base avec markers
 var markers = L.markerClusterGroup();
 
@@ -193,6 +202,7 @@ function creerDonnees(data, filtre, expression) {
     return newGeoJson;
 }
 
+
 // Chargement du nouveau geoJSON avec le même affichage qu'initialement ainsi que les mêmes popup
 function afficheDonneesCarte(newGeoJson, map) {
 
@@ -205,7 +215,7 @@ function afficheDonneesCarte(newGeoJson, map) {
             });
 
             markers.addLayer(circleMarker);
-
+            
             return circleMarker;
         },
         onEachFeature: function(feature, layer) {
@@ -222,6 +232,7 @@ function afficheDonneesCarte(newGeoJson, map) {
                 '<button><a href="details.html?id=' + feature.properties.id + '" class="popbut">Lire plus</a></button>'
             )
         },
+        
     })//.addTo(map); // ajout à la carte
 
     map.addLayer(markers);
@@ -241,7 +252,7 @@ function basolcolor(d) {
     }
     return d == 'Micropolluants organiques' ? '#a65628' : // couleur = marron
         d == 'Chimique' ? '#fed906' : // couleur = jaune paille
-        d == 'Metaux et metalloides' ? '#999999' : // couleur = gris
+        d == 'Metaux et metalloides' ? '#1c9489' : // couleur = gris
         d == 'Phytosanitaires' ? '#4daf4a' : // couleur = vert
         d == 'Element mineraux' ? '#377eb8' : // couleur = bleu
         d == 'Pharmaceutiques et hormones' ? '#f781bf' : // couleur = rose
@@ -249,36 +260,20 @@ function basolcolor(d) {
         '#e41a1c'; // couleur = rouge
 }
 
-
-/*
-// variable basolLayer qui charge le geoJson de la couche basol
-let basolLayer = L.geoJson(data, {
-    pointToLayer: function(feature, latlng) {
-        return L.circleMarker(latlng, {
-            radius: 5, // taille du cercle du symbole
-            fillOpacity: 1, // Opacité du symbole
-            color: basolcolor(feature.properties.nom_classe) // appel de la fonction basolColor
-        });
-    },
-    // affichage d'une popup pour chaque élément contenu dans le Geojson
-    onEachFeature: function(feature, layer) {
-
-        // Réunion des 3 catégories dans la même (popup)
-        var classe = feature.properties.nom_classe
-        if(classe == 'Aucun' || classe == 'Non renseigné' || classe == 'Informations incompletes'){
-            classe = 'Informations manquantes';
-        }
-
-        layer.bindPopup(
-            '<p hidden>identifiant :' + feature.properties.id + '</p>' +
-            '<h2>Entreprise : ' + feature.properties.nom_site + '</h2>' +
-            '<h2>Region : ' + feature.properties.region + '</h2>' +
-            '<h2>Polluants : ' + classe + '</h2>' +
-            '<button><a href="details.html?id=' + feature.properties.id + '" class="popbut">Lire plus</a></button>'
-        )
-    },
-}).addTo(map); // ajour à la carte*/
-//zoom sur la couche chargé
+// Couleur de fond du MarkerClusterGroup
+function secondColor(d){
+    if(d == 'Aucun' || d == 'Non renseigné' || d == 'Informations incompletes'){
+        d = 'Informations manquantes'
+    }
+    return d == 'Micropolluants organiques' ? '#d98859' : // couleur = marron
+        d == 'Chimique' ? '#fce877' : // couleur = jaune paille
+        d == 'Metaux et metalloides' ? '#49afa5' : // couleur = gris 
+        d == 'Phytosanitaires' ? '#7ce079' : // couleur = vert
+        d == 'Element mineraux' ? '#6eaadb' : // couleur = bleu
+        d == 'Pharmaceutiques et hormones' ? '#f7b0d5' : // couleur = rose
+        d == 'Informations manquantes' ? '#e6d0ac' : // couleur = beige
+        '#f06061'; // couleur = rouge
+}
 
 // variable contenant les fonds de cartes
 var basemaps = {
@@ -306,7 +301,6 @@ var filtreRegion = document.getElementById("filtre-region");
 
 // ajout d'un événement lorsque l'on change la valeur dans la liste déroulante
 filtreRegion.addEventListener('change', function(event) {
-
     // on enregistre la valeur sélectionnée
     expression = filtreRegion.value;
 
@@ -422,7 +416,6 @@ filtreDepartement.addEventListener('change', function(event) {
 });
 
 
-
 //  Pour liste déroulante des communes
 var filtreCommune = document.getElementById("filtreCommune");
 
@@ -486,10 +479,29 @@ filtrePollution.addEventListener('change', function(event) {
     // suppression de la couche basol affichée
     groupLayer.removeLayer(basolLayer);
     map.removeLayer(basolLayer);
+
+    var styleSmall = document.createElement('style');
+    styleSmall.innerHTML = '.marker-cluster { background-color:' + secondColor(expression) + '!important; }';
+    document.head.appendChild(styleSmall);
+    var styleSmallDiv = document.createElement('style');
+    styleSmallDiv.innerHTML = '.marker-cluster div { background-color:' + basolcolor(expression) + '!important; color: #fff !important; }';
+    document.head.appendChild(styleSmallDiv);
+
     var filtre = "nom_classe"
     var newGeoJson = creerDonnees(data, filtre, expression);
     //console.log(newGeoJson);
+
     afficheDonneesCarte(newGeoJson, map);
+
+    // Mise à jour de la liste des entreprises en fonction du type de polluant sélectionné
+    var newListEntreprise = Object.keys(entrepriseParPollution[expression]).sort();
+    var outputEntreprise = "<option value=\"\">Choisissez une entreprise</option>";
+
+    newListEntreprise.forEach(el => {
+        outputEntreprise += "<option>" + el + "</option>";
+    });
+
+    document.getElementById('filtreEntreprise').innerHTML = outputEntreprise;
 });
 
 
