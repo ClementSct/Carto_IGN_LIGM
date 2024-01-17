@@ -477,7 +477,7 @@ filtrePollution.addEventListener('change', function(event) {
 
     // on enregistre la valeur sélectionnée
     expression = filtrePollution.value;
-    console.log(expression);
+
     // suppression de la couche basol affichée
     groupLayer.removeLayer(basolLayer);
     map.removeLayer(basolLayer);
@@ -489,9 +489,8 @@ filtrePollution.addEventListener('change', function(event) {
     styleSmallDiv.innerHTML = '.marker-cluster div { background-color:' + basolcolor(expression) + '!important; color: #fff !important; }';
     document.head.appendChild(styleSmallDiv);
 
-    var filtre = "nom_classe"
+    var filtre = "nom_classe";
     var newGeoJson = creerDonnees(data, filtre, expression);
-    //console.log(newGeoJson);
 
     afficheDonneesCarte(newGeoJson, map);
 
