@@ -257,6 +257,7 @@ function basolcolor(d) {
         d == 'Element mineraux' ? '#377eb8' : // couleur = bleu
         d == 'Pharmaceutiques et hormones' ? '#f781bf' : // couleur = rose
         d == 'Informations manquantes' ? '#c8ad7f' : // couleur = beige
+        d == '' ? '#999999' : // Si reset
         '#e41a1c'; // couleur = rouge
 }
 
@@ -272,6 +273,7 @@ function secondColor(d){
         d == 'Element mineraux' ? '#6eaadb' : // couleur = bleu
         d == 'Pharmaceutiques et hormones' ? '#f7b0d5' : // couleur = rose
         d == 'Informations manquantes' ? '#e6d0ac' : // couleur = beige
+        d == '' ? '#bfbdbd' : // Si reset
         '#f06061'; // couleur = rouge
 }
 
@@ -475,7 +477,7 @@ filtrePollution.addEventListener('change', function(event) {
 
     // on enregistre la valeur sélectionnée
     expression = filtrePollution.value;
-
+    console.log(expression);
     // suppression de la couche basol affichée
     groupLayer.removeLayer(basolLayer);
     map.removeLayer(basolLayer);
