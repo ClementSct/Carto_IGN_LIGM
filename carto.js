@@ -612,8 +612,14 @@ filtre0.addEventListener('click', function(nofilter) {
         e.value = "";
         var filtre = e.id.split("-")[1];
         newGeoJson = creerDonnees(data, filtre, "");
-
     })
+    var styleSmall = document.createElement('style');
+    styleSmall.innerHTML = '.marker-cluster { background-color: #bfbdbd !important; }';
+    document.head.appendChild(styleSmall);
+    var styleSmallDiv = document.createElement('style');
+    styleSmallDiv.innerHTML = '.marker-cluster div { background-color: #999999 !important; color: #fff !important; }';
+    document.head.appendChild(styleSmallDiv);
+    
     afficheDonneesCarte(newGeoJson, map);
 })
 
