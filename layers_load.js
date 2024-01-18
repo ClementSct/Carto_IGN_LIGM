@@ -11,6 +11,7 @@ var pollutionParRegion = { "": {} };
 var pollutionParDpt = { "": {} };
 var pollutionParCommune = { "": {} };
 var entrepriseParPollution = { "": {} };
+var entrepriseParPollutionEtZone = { "": {} };
 
 
 
@@ -149,6 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 entrepriseParPollution[element.properties.nom_classe][element.properties.nom_site] = 0;
                 entrepriseParPollution[""][element.properties.nom_site] = 0;
+
 
                 // DESCRIPTION
                 //Chargement de la description complète au lieu de l'abrégée

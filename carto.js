@@ -109,6 +109,8 @@ basolLayer = L.geoJson(data, {
         return circleMarker;
     },
     onEachFeature: function(feature, layer) {
+        var isMouseOverPopup = false;
+        
         // Réunion des 3 catégories dans la même (popup)
         var classe = feature.properties.nom_classe
         if(classe == 'Aucun' || classe == 'Non renseigné' || classe == 'Informations incompletes'){
@@ -119,8 +121,13 @@ basolLayer = L.geoJson(data, {
             '<h2>Entreprise : ' + feature.properties.nom_site + '</h2>' +
             '<h2>Region : ' + feature.properties.region + '</h2>' +
             '<h2>Polluants : ' + classe + '</h2>' +
-            '<button><a href="details.html?id=' + feature.properties.id + '" class="popbut">Lire plus</a></button>'
-        )
+            '<button><a href="details.html?id=' + feature.properties.id + '" class="popbut" target="_blank">Lire plus</a></button>'
+        ).on({
+            mouseover: function () {
+                isMouseOverPopup = true;
+                this.openPopup();
+            }
+        });
     },
 })
 
@@ -229,11 +236,11 @@ function afficheDonneesCarte(newGeoJson, map) {
                 '<h2>Entreprise : ' + feature.properties.nom_site + '</h2>' +
                 '<h2>Region : ' + feature.properties.region + '</h2>' +
                 '<h2>Polluants : ' + classe + '</h2>' +
-                '<button><a href="details.html?id=' + feature.properties.id + '" class="popbut">Lire plus</a></button>'
+                '<button><a href="details.html?id=' + feature.properties.id + '" class="popbut" target="_blank">Lire plus</a></button>'
             )
         },
         
-    })//.addTo(map); // ajout à la carte
+    })
 
     map.addLayer(markers);
     map.fitBounds(basolLayer.getBounds(), { maxZoom: 9 });
@@ -503,6 +510,42 @@ filtrePollution.addEventListener('change', function(event) {
     });
 
     document.getElementById('filtreEntreprise').innerHTML = outputEntreprise;
+
+    // Récupérez les valeurs sélectionnées dans les filtres
+    var selectedRegion = document.getElementById("filtre-region").value;
+    var selectedDepartement = document.getElementById("filtre-dpt").value;
+    var selectedCommune = document.getElementById("filtreCommune").value;
+    var selectedPollution = document.getElementById("filtrePollution").value;
+
+    // Filtrer les entreprises en fonction des critères sélectionnés
+    var filteredEntreprises = [];
+
+    if (selectedRegion !== "") {
+        // Filtrer par région
+        filteredEntreprises = filteredEntreprises.concat(Object.keys(entreprisesParRegion[selectedRegion]));
+    }
+    if (selectedDepartement !== "") {
+        // Filtrer par département
+        filteredEntreprises = filteredEntreprises.concat(Object.keys(entreprisesParDpt[selectedDepartement]));
+    }
+    if (selectedCommune !== "") {
+        // Filtrer par commune
+        filteredEntreprises = filteredEntreprises.concat(Object.keys(entreprisesParCommune[selectedCommune]));
+    }
+    if (selectedPollution !== "") {
+        // Filtrer par type de pollution
+        filteredEntreprises = filteredEntreprises.concat(Object.keys(entrepriseParPollution[selectedPollution]));
+    }
+
+    // Supprimer les doublons et mettre à jour la liste déroulante des entreprises
+    var uniqueEntreprises = Array.from(new Set(filteredEntreprises)).sort();
+    var outputEntreprise = "<option value=\"\">Choisissez une entreprise</option>";
+
+    uniqueEntreprises.forEach(el => {
+        outputEntreprise += "<option>" + el + "</option>";
+    });
+
+    document.getElementById('filtreEntreprise').innerHTML = outputEntreprise;
 });
 
 
@@ -557,6 +600,7 @@ legend.onAdd = function(map) {
     }
     return div;
 }
+
 legend.addTo(map); // ajout de la légende à la carte
 
 //déclaration d'une variable filtre0 qui corrspond au bouton "réinitialiser les filtres"
@@ -567,8 +611,8 @@ filtre0.addEventListener('click', function(nofilter) {
     document.querySelectorAll('select').forEach(function(e) {
         e.value = "";
         var filtre = e.id.split("-")[1];
-
         newGeoJson = creerDonnees(data, filtre, "");
+
     })
     afficheDonneesCarte(newGeoJson, map);
 })
