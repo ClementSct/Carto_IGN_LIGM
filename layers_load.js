@@ -57,11 +57,6 @@ document.addEventListener('DOMContentLoaded', () => {
             //selectionne les éléments du geojson
             var elements = data.features
 
-            // TESTS :
-            elements.forEach(element => {
-
-            })
-
 
             // Récupére les regions/departements/communes et les ajoute dans des listes
             elements.forEach(element => {
@@ -194,6 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
             });
+            
             typesDePollution.forEach(el => {
                 outputpollution += "<option>" + el + "</option>";
             });
@@ -215,4 +211,5 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log(err);
         })
     })
+
 });
