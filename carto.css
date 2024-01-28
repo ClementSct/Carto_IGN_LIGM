@@ -155,10 +155,57 @@ div#filtre p {
 }
 
 div#filtre h3 {
-    padding: 20px 20px;
+    padding: 10px 10px;
     margin: 0;
-    margin-top: 20px;
 }
+
+.grid-container {
+    display: grid;
+    margin-top: 10px;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(4, auto);
+    gap: 10px; /* Espace entre les éléments */
+}
+
+.grid-item {
+    display: flex;
+    align-items: center;
+}
+
+.grid-item input[type="checkbox"] {
+    margin-right: 10px; 
+    min-width: 16px; 
+    min-height: 16px; 
+    max-width: 16px;
+    max-width: 16px;
+}
+
+.grid-item label {
+    margin-left: 5px;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-right: 10px;
+}
+
+.checkbox-container input[type="checkbox"] {
+    border-radius: 3px;
+}
+
+.checkbox-container input[type="checkbox"]:checked {
+    background-color: #4CAF50; 
+    border-color: #4CAF50;
+    color: white; /
+}
+
+/* fin checkbox */
 
 select {
     width: 80%;
@@ -167,7 +214,7 @@ select {
 }
 
 .filterbutton {
-    margin-top: 10%;
+    margin-top: 7%;
     padding: 2%;
     border-radius: 10px;
     border: none;

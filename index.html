@@ -5,7 +5,7 @@
     <!-- Balise méta -->
     <meta charset="UTF-8" />
     <link rel="icon" type="image/x-icon" href="logo_Carte_LIGM.svg">
-    <title>Cartographie sites de pollution</title>
+    <title>Cartographie des sites de pollution</title>
     <!-- Eléments utiles -->
     <!-- Police sympa -->
     <link rel="stylesheet" href="./libraries/css2.css">
@@ -52,8 +52,8 @@
     <div id="container">
         <!-- Div qui contient l'entête de la page web -->
         <div id="header">
-            <h1>Cartographie sites de pollution</h1>
-            <p>Projet analyse spatiale - ENSG. Université Gustave Eiffel. IGN</p>
+            <h1>Cartographie des sites de pollution</h1>
+            <p>Projet d'analyse spatiale - ENSG. Université Gustave Eiffel. IGN</p>
         </div>
 
         <div id="contenu" class="contenu">
@@ -77,18 +77,59 @@
                 </select>
 
                 <h3>Autres filtres </h3>
-                <!-- menu déroulant pour les polluants -->
-                <label for="filtreEntreprise">Type de pollution</label></br>
-                <select id="filtrePollution" name="filtrePollution">
-                    <option value="">Choisissez un polluant</option>
-                </select>
+                <!-- checkbox pour les polluants -->
+                <label for="filtreEntreprise">Type de pollution :</label></br>
+                <div class="grid-container">
+                    <div class="grid-item">
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="organiques" name="organiques" class="polluant" onchange="checkboxValue(this)">
+                            <label for="organiques">Micropolluants organiques</label>
+                        </div>
+                    </div>
+                    <div class="grid-item">
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="chimique" name="chimique" class="polluant" onchange="checkboxValue(this)">
+                            <label for="chimique">Chimique</label>
+                        </div>
+                    </div>
+                    <div class="grid-item">
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="metaux" name="metaux" class="polluant" onchange="checkboxValue(this)">
+                            <label for="metaux">Métaux et métailloïdes</label>
+                        </div>
+                    </div>
+                    <div class="grid-item">
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="phytosanitaires" name="phytosanitaires" class="polluant" onchange="checkboxValue(this)">
+                            <label for="phytosanitaires">Phytosanitaires</label>
+                        </div>
+                    </div>
+                    <div class="grid-item">
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="mineraux" name="mineraux" class="polluant" onchange="checkboxValue(this)">
+                            <label for="mineraux">Éléments minéraux</label>
+                        </div>
+                    </div>
+                    <div class="grid-item">
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="pharma" name="pharma" class="polluant" onchange="checkboxValue(this)">
+                            <label for="pharma">Pharmaceutiques et hormones</label>
+                        </div>
+                    </div>
+                    <div class="grid-item">
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="info_manquantes" name="info_manquantes" class="polluant" onchange="checkboxValue(this)">
+                            <label for="info_manquantes">Informations manquantes</label>
+                        </div>
+                    </div>
+                </div>
                 </br>
                 <!-- menu déroulant pour les entreprises -->
                 <label for="filtreEntreprise">Nom de l'entreprise</label></br>
                 <select id="filtreEntreprise" name="filtreEntreprise">
                     <option value="">Choisissez une entreprise</option>
                 </select>
-                <h3>Cherchez</h3>
+                <h3>Rechercher</h3>
                 <input type="text" placeholder="ex : Station service" class="searchBar">
                 </br>
                 <button class="filterbutton">Réinitialiser les filtres</button>
@@ -104,8 +145,8 @@
         <h2>À propos de ce site web</h2>
         Site web créé dans le cadre de la thèse de doctorat de <a href="https://cv.hal.science/chuanming-dong">Chuanming
             Dong</a>, hébergé <a href="https://pages.github.com/">sur GitHub Pages</a>, code disponible sous licence
-        libre AGPL (contributions : I. Amri, S. Bodin, C. Dominguès, C. Dong, P. Gambette, R. Orly, N. Sebahoun ; plus
-        d'informations <a href="https://github.com/NoamSeb/Carto_IGN_LIGM">sur GitHub</a>).<br>
+        libre AGPL (contributions : I. Amri, S. Bodin, C. Dominguès, C. Dong, P. Gambette, R. Orly, N. Sebahoun, C. Sicot ; 
+        plus d'informations : <a href="https://clementsct.github.io/Carto_IGN_LIGM/">sur GitHub</a>).<br>
         Source des données : fichier <a
             href="https://www.data.gouv.fr/fr/datasets/base-des-sols-pollues/">BASOL.json</a>
         (données dérivées de la <a

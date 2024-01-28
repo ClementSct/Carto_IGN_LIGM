@@ -19,8 +19,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const regions = document.querySelector('#filtre-region');
     const departements = document.getElementById('filtre-dpt');
     const communes = document.getElementById('filtreCommune');
-    //
-    const pollution = document.getElementById('filtrePollution');
     const entreprise = document.getElementById('filtreEntreprise');
 
     var descriptions = {}
@@ -157,7 +155,6 @@ document.addEventListener('DOMContentLoaded', () => {
             var listRegion = Object.keys(ensRegion).sort();
             var listDepartement = Object.keys(ensDepartement).sort();
             var listCommune = Object.keys(ensCommune).sort();
-            var listPollution = Object.keys(ensPollution).sort();
             var listentreprise = Object.keys(ensEntreprise).sort();
 
             //Rend les élément unique au sein des liste et les rajoute dans l'html, pour les régions
@@ -172,27 +169,6 @@ document.addEventListener('DOMContentLoaded', () => {
             listCommune.forEach(el => {
                 outputcommune += "<option>" + el + "</option>";
             });
-            
-            // pour les types de pollutions
-
-            let typesDePollution = new Set();
-
-            listPollution.forEach(el => {
-                if (el == "Aucun" || el == "Informations incompletes" || el == "Non renseigné") {
-                    // Ajoutez "Informations manquantes" s'il n'est pas déjà présent
-                    if (!typesDePollution.has("Informations manquantes")) {
-                        typesDePollution.add("Informations manquantes");
-                    }
-                }
-                if (el == "Chimique" || el == "Micropolluants organiques" || el == "Metaux et metalloides" || el == "Phytosanitaires" || el == "Element mineraux" || el == "Pharmaceutiques et hormones" || el == "Informations manquantes") {
-                    typesDePollution.add(el);
-                }
-                
-            });
-            
-            typesDePollution.forEach(el => {
-                outputpollution += "<option>" + el + "</option>";
-            });
             // pour le nom des entreprises
             listentreprise.forEach(el => {
                 outputentreprise += "<option>" + el + "</option>";
@@ -203,8 +179,6 @@ document.addEventListener('DOMContentLoaded', () => {
             regions.innerHTML += outputregion;
             departements.innerHTML += outputdepartement;
             communes.innerHTML += outputcommune;
-            //
-            pollution.innerHTML += outputpollution;
             entreprise.innerHTML += outputentreprise;
 
         }).catch(err => {
