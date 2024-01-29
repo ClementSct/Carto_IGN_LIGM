@@ -84,8 +84,132 @@ var Geologie = L.tileLayer.wms('http://geoservices.brgm.fr/WMS-C/?', {
 
 var error = document.querySelector(".error");
 
+// Initialisation des markers
+var markers = L.markerClusterGroup();
+
+initDonnees();
+
+// Variable pour stocker les données initiales
+var initialData;
+
+function initDonnees(){
+    // Style des clusters de départ :
+    var styleSmall = document.createElement('style');
+    styleSmall.innerHTML = '.marker-cluster { background-color: #bfbdbd !important; }';
+    document.head.appendChild(styleSmall);
+
+    var styleSmallDiv = document.createElement('style');
+    styleSmallDiv.innerHTML = '.marker-cluster div { background-color: #999999 !important; color: #fff !important; }';
+    document.head.appendChild(styleSmallDiv);
+    initialData = data;
+    verifCheckbox(data);
+
+    basolLayer = L.geoJson(data, {
+        pointToLayer: function(feature, latlng) {
+            var circleMarker = L.circleMarker(latlng, {
+                radius: 5, // taille du cercle du symbole
+                fillOpacity: 1, // Opacité du symbole
+                color: basolcolor(feature.properties.nom_classe) // appel de la fonction basolColor
+            });
+
+            markers.addLayer(circleMarker);
+
+            return circleMarker;
+        },
+        onEachFeature: function(feature, layer) {
+            
+            // Réunion des 3 catégories dans la même (popup)
+            var classe = feature.properties.nom_classe
+            if(classe == 'Aucun' || classe == 'Non renseigné' || classe == 'Informations incompletes'){
+                classe = 'Informations manquantes';
+            }
+            layer.bindPopup(
+                '<p hidden>identifiant :' + feature.properties.id + '</p>' +
+                '<h2>Entreprise : ' + feature.properties.nom_site + '</h2>' +
+                '<h2>Region : ' + feature.properties.region + '</h2>' +
+                '<h2>Polluants : ' + classe + '</h2>' +
+                '<button><a href="details.html?id=' + feature.properties.id + '" class="popbut" target="_blank">Lire plus</a></button>'
+            ).on({
+                mouseover: function () {
+                    isMouseOverPopup = true;
+                    this.openPopup();
+                }
+            });
+        },
+    })
+    
+    map.addLayer(markers);
+    map.fitBounds(basolLayer.getBounds(), { maxZoom: 9 });
+}
+
+var listePolluants = []
+
+// Fonction qui récupère le polluant coché par l'utilisateur
+function checkboxValue(checkbox) {  
+    var type = checkbox.id;
+    var polluant;
+    if(type == 'organiques'){
+        polluant = 'Micropolluants organiques'
+    }
+    if(type == 'chimique'){
+        polluant = 'Chimique'
+    }
+    if(type == 'metaux'){
+        polluant = 'Metaux et metalloides'
+    }
+    if(type == 'phytosanitaires'){
+        polluant = 'Phytosanitaires'
+    }
+    if(type == 'mineraux'){
+        polluant = 'Element mineraux'
+    }
+    if(type == 'pharma'){
+        polluant = 'Pharmaceutiques et hormones'
+    }
+    if(type == 'info_manquantes'){
+        polluant = 'Informations manquantes'
+    }
+    if (checkbox.checked) {
+        listePolluants.push(polluant)
+    }
+    else{
+        var id = listePolluants.indexOf(polluant);
+        if(id !== -1){
+            listePolluants.splice(id, 1);
+        }
+    }
+    majPollution(polluant);
+    // Si 1 polluant coché : coloration en fonction
+    if(listePolluants.length == 1){
+        creerDonneesAvecFiltre();
+        var styleSmall = document.createElement('style');
+        styleSmall.innerHTML = '.marker-cluster { background-color:' + secondColor(listePolluants[0]) + '!important; }';
+        document.head.appendChild(styleSmall);
+        var styleSmallDiv = document.createElement('style');
+        styleSmallDiv.innerHTML = '.marker-cluster div { background-color:' + basolcolor(listePolluants[0]) + '!important; color: #fff !important; }';
+        document.head.appendChild(styleSmallDiv);
+    }
+    // Si plus d'un polluant coché : changement du style en gris
+    if(listePolluants.length > 1){
+        creerDonneesAvecFiltre();
+        var styleSmall = document.createElement('style');
+        styleSmall.innerHTML = '.marker-cluster { background-color: #bfbdbd !important; }';
+        document.head.appendChild(styleSmall);
+        var styleSmallDiv = document.createElement('style');
+        styleSmallDiv.innerHTML = '.marker-cluster div { background-color: #999999 !important; color: #fff !important; }';
+        document.head.appendChild(styleSmallDiv);        
+    }
+    if(listePolluants.length == 0){
+        window.location.reload();
+    }
+}
+
+function creerDonneesAvecFiltre(){
+    creerDonnees(data, listePolluants);
+}
+
 //Création des données de la carte en fonction du filtre choisi
-function creerDonnees(data, filtre, expression) {
+function creerDonnees(data, polluants) {
     // création d'un nouveau geoJSON
     let newGeoJson = {
         "type": "FeatureCollection",
@@ -93,89 +217,171 @@ function creerDonnees(data, filtre, expression) {
         "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
         "features": []
     };
+    markers.clearLayers();
+    
     // filtrage sur le geoJSON de base
     // on ajoute dans le nouveau geoJSON les données ayant la région que nous avons sélectionnée
     data.features.forEach(element => {
-        // console.log("Element : " + element.properties[filtre]);
-        // console.log("expression : " + expression);
+
         var filtreOk = true;
         var region = document.querySelector("#filtre-region").value;
         var dpt = document.querySelector("#filtre-dpt").value;
         var commune = document.querySelector("#filtreCommune").value;
-        var pollution = document.querySelector("#filtrePollution").value;
         var entreprise = document.querySelector("#filtreEntreprise").value;
         var recherche = document.querySelector(".searchBar").value;
-        //filtre REGION
+        
+        // Filtre REGION
         if (region != "" && region != element.properties["region"]) {
             filtreOk = false;
         }
 
+        // Filtre DEPARTEMENT
         if (dpt != "" && dpt != element.properties["dpt"]) {
             filtreOk = false;
         }
 
+        // Filtre COMMUNE
         if (commune != "" && commune != element.properties["commune"]) {
             filtreOk = false;
         }
+        
+        // Filtre POLLUTION
+        var polluantTrouve = false;
+        if(polluants){
+            for (let i = 0; i < polluants.length; i++) {
+                if (polluants[i] == 'Informations manquantes') {
 
-        console.log(element.properties["nom_classe"])
-        if (pollution != "" && !element.properties["nom_classe"].includes(pollution)) {
-            filtreOk = false;
+                    if (element.properties["nom_classe"] == 'Aucun' || 
+                        element.properties["nom_classe"] == 'Non renseigné' || 
+                        element.properties["nom_classe"] == 'Informations incompletes') {
+                        polluantTrouve = true;
+                    }
+                } else if (element.properties["nom_classe"].includes(polluants[i])) {
+                    polluantTrouve = true;
+                }
+            }
+            if (!polluantTrouve) {
+                filtreOk = false;
+            }
         }
-
+        
+        // Filtre ENTREPRISE
         if (entreprise != "" && entreprise != element.properties["nom_site"]) {
             filtreOk = false;
         }
 
+        // Filtre RECHERCHE
         if (recherche != "" && element.properties["descrip"] != null && element.properties["descrip"].indexOf(recherche) == -1) {
             filtreOk = false;
         }
 
         if (filtreOk) {
             newGeoJson.features.push(element);
-            console.log("push fait !")
         }
     });
+
     if (newGeoJson.features.length == 0) {
         error.style.display = "block";
-        console.log("If passé");
     }
+    else{
+        afficheDonneesCarte(newGeoJson, map);
+    }
+    
     return newGeoJson;
 }
 
+function verifCheckbox(data){
+    var ensemblePolluantsUniques = [];
 
-// chargement du nouveau geoJSON avec le même affichage qu'initialement ainsi que les mêmes popup
+    for (var i = 0; i < data.features.length; i++) {
+        var polluant = data.features[i].properties["nom_classe"];
+
+        if(!ensemblePolluantsUniques.includes(polluant)){
+            ensemblePolluantsUniques.push(polluant);
+        }
+    }
+
+    var ensembleSansDoublons = new Set(ensemblePolluantsUniques.map(JSON.stringify));
+
+    // Conversion en un simple tableau (plus simple à gérer)
+    var nouvelleListeSansDoublons = Array.from(ensembleSansDoublons, JSON.parse).flat();
+
+    // Dernier tri avec regroupement de 'Aucun', 'Non renseigné' et 'Informations incompletes'
+    listeDernierTri = []
+
+    for(i = 0; i < nouvelleListeSansDoublons.length; i++){
+        if(nouvelleListeSansDoublons[i] == 'Aucun' || nouvelleListeSansDoublons[i] == 'Informations incompletes' ||
+        nouvelleListeSansDoublons[i] == 'Non renseigné'){
+            if(!(listeDernierTri.includes('Informations manquantes'))){
+                listeDernierTri.push('Informations manquantes');
+            }
+        }
+        else{
+            listeDernierTri.push(nouvelleListeSansDoublons[i])
+        }
+    }
+
+    var idToPolluant = {
+        'organiques': 'Micropolluants organiques',
+        'chimique': 'Chimique',
+        'metaux': 'Metaux et metalloides',
+        'phytosanitaires': 'Phytosanitaires',
+        'mineraux': 'Element mineraux',
+        'pharma': 'Pharmaceutiques et hormones',
+        'info_manquantes': 'Informations manquantes'
+    };
+
+    var checkboxes = document.querySelectorAll('.polluant');
+    checkboxes.forEach(function(checkbox) {
+        var idCheckbox = checkbox.id;
+        var polluant = idToPolluant[idCheckbox];
+    
+        var estPresent = listeDernierTri.includes(polluant);
+    
+        checkbox.disabled = !estPresent;
+    });
+}
+
+// Chargement du nouveau geoJSON avec le même affichage qu'initialement ainsi que les mêmes popup
 function afficheDonneesCarte(newGeoJson, map) {
 
     basolLayer = L.geoJson(newGeoJson, {
         pointToLayer: function(feature, latlng) {
-            return L.circleMarker(latlng, {
-                radius: 5, // taille du cercle du symbole
-                fillOpacity: 1, // Opacité du symbole
-                color: basolcolor(feature.properties.nom_classe) // appel de la fonction basolColor
+            var circleMarker = L.circleMarker(latlng, {
+                radius: 5, 
+                fillOpacity: 1,
+                color: basolcolor(feature.properties.nom_classe)
             });
+
+            markers.addLayer(circleMarker);
+            
+            return circleMarker;
         },
         onEachFeature: function(feature, layer) {
+            // Réunion des 3 catégories dans la même (popup)
+            var classe = feature.properties.nom_classe
+            if(classe == 'Aucun' || classe == 'Non renseigné' || classe == 'Informations incompletes'){
+                classe = 'Informations manquantes';
+            }
             layer.bindPopup(
                 '<p hidden>identifiant :' + feature.properties.id + '</p>' +
                 '<h2>Entreprise : ' + feature.properties.nom_site + '</h2>' +
                 '<h2>Region : ' + feature.properties.region + '</h2>' +
-                '<h2>Polluants : ' + feature.properties.nom_classe + '</h2>' +
-                '<button><a href="details.html?id=' + feature.properties.id + '" class="popbut">Lire plus</a></button>'
-            )
+                '<h2>Polluants : ' + classe + '</h2>' +
+                '<button><a href="details.html?id=' + feature.properties.id + '" class="popbut" target="_blank">Lire plus</a></button>'
+            ).on({
+                mouseover: function () {
+                    isMouseOverPopup = true;
+                    this.openPopup();
+                }
+            });
         },
-    }).addTo(map); // ajout à la carte
+        
+    })
 
-    // zoom sur les nouvelles données
-    console.log(basolLayer.getBounds());
-    if (newGeoJson != 0) {
-        map.fitBounds(basolLayer.getBounds(), { maxZoom: 9 })
-    } else {
-        alerte.style.display = "block"
-    };
-}
-
-
+    map.addLayer(markers);
+    map.fitBounds(basolLayer.getBounds(), { maxZoom: 9 });
+};
 
 // Affichage de l'échelle : par défaut en mètres, en bas à gauche de la carte
 L.control.scale({ position: "bottomleft" }).addTo(map);
@@ -183,42 +389,35 @@ L.control.scale({ position: "bottomleft" }).addTo(map);
 // fonction pour définir la couleur des points de basol en fonction du type de pollution
 // prend en entrée l'attribut selon lequel on veut changer la couleur du symbole, ici il s'agit de feature.properties.nom_classe
 function basolcolor(d) {
-    return d == 'Aucun' ? '#c8ad7f' : // couleur = beige
-        d == 'Micropolluants organiques' ? '#a65628' : // couleur = marron
+    if(d == 'Aucun' || d == 'Non renseigné' || d == 'Informations incompletes'){
+        d = 'Informations manquantes'
+    }
+    return d == 'Micropolluants organiques' ? '#a65628' : // couleur = marron
         d == 'Chimique' ? '#fed906' : // couleur = jaune paille
-        d == 'Metaux et metalloides' ? '#999999' : // couleur = gris
+        d == 'Metaux et metalloides' ? '#1c9489' : // couleur = gris
         d == 'Phytosanitaires' ? '#4daf4a' : // couleur = vert
         d == 'Element mineraux' ? '#377eb8' : // couleur = bleu
         d == 'Pharmaceutiques et hormones' ? '#f781bf' : // couleur = rose
-        d == 'Non renseigné' ? '#ff7f00' : // couleur = orange
-        d == 'Informations incompletes' ? '#984ea3' : // couleur = violet
+        d == 'Informations manquantes' ? '#c8ad7f' : // couleur = beige
+        d == '' ? '#999999' : // Si reset
         '#e41a1c'; // couleur = rouge
-
 }
 
-// variable basolLayer qui charge le geoJson de la couche basol
-let basolLayer = L.geoJson(data, {
-    pointToLayer: function(feature, latlng) {
-        return L.circleMarker(latlng, {
-            radius: 5, // taille du cercle du symbole
-            fillOpacity: 1, // Opacité du symbole
-            color: basolcolor(feature.properties.nom_classe) // appel de la fonction basolColor
-        });
-    },
-    // affichage d'une popup pour chaque élément contenu dans le Geojson
-    onEachFeature: function(feature, layer) {
-        layer.bindPopup(
-            '<p hidden>identifiant :' + feature.properties.id + '</p>' +
-            '<h2>Entreprise : ' + feature.properties.nom_site + '</h2>' +
-            '<h2>Region : ' + feature.properties.region + '</h2>' +
-            '<h2>Polluants : ' + feature.properties.nom_classe + '</h2>' +
-            '<button><a href="details.html?id=' + feature.properties.id + '" class="popbut">Lire plus</a></button>'
-        )
-    },
-}).addTo(map); // ajour à la carte
-//zoom sur la couche chargé
-map.fitBounds(basolLayer.getBounds(), { maxZoom: 9 });
-
+// Couleur de fond du MarkerClusterGroup
+function secondColor(d){
+    if(d == 'Aucun' || d == 'Non renseigné' || d == 'Informations incompletes'){
+        d = 'Informations manquantes'
+    }
+    return d == 'Micropolluants organiques' ? '#d98859' : // couleur = marron
+        d == 'Chimique' ? '#fce877' : // couleur = jaune paille
+        d == 'Metaux et metalloides' ? '#49afa5' : // couleur = gris 
+        d == 'Phytosanitaires' ? '#7ce079' : // couleur = vert
+        d == 'Element mineraux' ? '#6eaadb' : // couleur = bleu
+        d == 'Pharmaceutiques et hormones' ? '#f7b0d5' : // couleur = rose
+        d == 'Informations manquantes' ? '#e6d0ac' : // couleur = beige
+        d == '' ? '#bfbdbd' : // Si reset
+        '#f06061'; // couleur = rouge
+}
 
 // variable contenant les fonds de cartes
 var basemaps = {
@@ -240,38 +439,42 @@ var donnees = {
 // ajout d'un gestionnaire de couche (par défaut en haut à droite)
 var groupLayer = L.control.layers(basemaps, donnees).addTo(map);
 
-
 // récupération de l'objet menu déroulant "filtreRegion" de la page html
 var filtreRegion = document.getElementById("filtre-region");
 
 // ajout d'un événement lorsque l'on change la valeur dans la liste déroulante
 filtreRegion.addEventListener('change', function(event) {
-
     // on enregistre la valeur sélectionnée
     expression = filtreRegion.value;
-
+    console.log(expression)
     // suppression de la couche basol affichée
     groupLayer.removeLayer(basolLayer);
     map.removeLayer(basolLayer);
-    var filtre = "region"
-    var newGeoJson = creerDonnees(data, filtre, expression);
 
-    afficheDonneesCarte(newGeoJson, map);
+    var newGeoJson = creerDonnees(data);
+    verifCheckbox(newGeoJson);
 
     //Affichage des départements qui correspondent à la région cible
     var newListDpt = Object.keys(dptParRegion[expression])
-    console.log(newListDpt)
     var outputdepartement = "<option value=\"\">Choisissez un département</option>";
-    // if (expression == "") {
-
-    // } else {
+    
     newListDpt.forEach(el => {
         outputdepartement += "<option>" + el + "</option>";
     });
 
     document.getElementById('filtre-dpt').innerHTML = outputdepartement;
-});
 
+    // Mise à jour de la liste des entreprises en fonction de la région sélectionnée
+    var newListEntreprise = Object.keys(entreprisesParRegion[expression]).sort();
+    var outputEntreprise = "<option value=\"\">Choisissez une entreprise</option>";
+
+    newListEntreprise.forEach(el => {
+        outputEntreprise += "<option>" + el + "</option>";
+    });
+
+    document.getElementById('filtreEntreprise').innerHTML = outputEntreprise;
+
+});
 
 //  Pour liste déroulante des départements
 var filtreDepartement = document.getElementById("filtre-dpt");
@@ -281,31 +484,32 @@ filtreDepartement.addEventListener('change', function(event) {
 
     // on enregistre la valeur sélectionnée
     expression = filtreDepartement.value;
-    //console.log(expression)
 
     // suppression de la couche basol affichée
     groupLayer.removeLayer(basolLayer);
     map.removeLayer(basolLayer);
-    var filtre = "dpt"
-    var newGeoJson = creerDonnees(data, filtre, expression);
-
-    afficheDonneesCarte(newGeoJson, map);
+    
+    var newGeoJson = creerDonnees(data);
+    verifCheckbox(newGeoJson);
 
     var newListCommune = Object.keys(communeParDpt[expression]).sort();
-    console.log(newListCommune)
     var outputcommune = "<option value=\"\">Choisissez une commune</option>";
-    // if (expression == "") {
 
-    // } else {
     newListCommune.forEach(el => {
         outputcommune += "<option>" + el + "</option>";
     });
 
-    //}
     document.getElementById('filtreCommune').innerHTML = outputcommune;
+
+    // Mise à jour de la liste des entreprises en fonction du département sélectionné
+    var newListEntreprise = Object.keys(entreprisesParDpt[expression]).sort();
+    var outputEntreprise = "<option value=\"\">Choisissez une entreprise</option>";
+
+    newListEntreprise.forEach(el => {
+        outputEntreprise += "<option>" + el + "</option>";
+    });
+    document.getElementById('filtreEntreprise').innerHTML = outputEntreprise;
 });
-
-
 
 //  Pour liste déroulante des communes
 var filtreCommune = document.getElementById("filtreCommune");
@@ -315,38 +519,63 @@ filtreCommune.addEventListener('change', function(event) {
 
     // on enregistre la valeur sélectionnée
     expression = filtreCommune.value;
-    //console.log(expression)
 
     // suppression de la couche basol affichée
     groupLayer.removeLayer(basolLayer);
     map.removeLayer(basolLayer);
-    var filtre = "commune"
-    var newGeoJson = creerDonnees(data, filtre, expression);
+    
+    var newGeoJson = creerDonnees(data);
+    verifCheckbox(newGeoJson);
 
-    afficheDonneesCarte(newGeoJson, map);
+    // Mise à jour de la liste des entreprises en fonction de la commune sélectionnée
+    var newListEntreprise = Object.keys(entreprisesParCommune[expression]).sort();
+    var outputEntreprise = "<option value=\"\">Choisissez une entreprise</option>";
+
+    newListEntreprise.forEach(el => {
+        outputEntreprise += "<option>" + el + "</option>";
+    });
+
+    document.getElementById('filtreEntreprise').innerHTML = outputEntreprise;
+
 });
 
+// Fonction qui met à jour les entreprises en fonction de la pollution choisie ainsi que des autres filtres
+function majPollution(expression){
 
-// //  Pour liste déroulante des type de pollution
-var filtrePollution = document.getElementById("filtrePollution");
+    // Mise à jour de la liste des entreprises en fonction du type de polluant sélectionné
+    var newListEntreprise = Object.keys(entrepriseParPollution[expression]).sort();
+    var outputEntreprise = "<option value=\"\">Choisissez une entreprise</option>";
 
-// ajout d'un événement lorsque l'on change la valeur dans la liste déroulante
-filtrePollution.addEventListener('change', function(event) {
+    newListEntreprise.forEach(el => {
+        outputEntreprise += "<option>" + el + "</option>";
+    });
 
-    // on enregistre la valeur sélectionnée
-    expression = filtrePollution.value;
-    console.log(expression)
+    document.getElementById('filtreEntreprise').innerHTML = outputEntreprise;
 
-    // suppression de la couche basol affichée
-    groupLayer.removeLayer(basolLayer);
-    map.removeLayer(basolLayer);
-    var filtre = "nom_classe"
-    var newGeoJson = creerDonnees(data, filtre, expression);
-    console.log(newGeoJson);
-    console.log("fait");
-    afficheDonneesCarte(newGeoJson, map);
-});
+    // Récupérer les valeurs sélectionnées dans les filtres
+    var selectedRegion = document.getElementById("filtre-region").value;
+    var selectedDepartement = document.getElementById("filtre-dpt").value;
+    var selectedCommune = document.getElementById("filtreCommune").value;
 
+    // Filtrer les entreprises en fonction des critères sélectionnés
+    var filteredEntreprises = [];
+
+    Object.keys(entreprisesParRegion[selectedRegion] || {}).forEach(function(entreprise) {
+        if (selectedDepartement === "" || entreprise in entreprisesParDpt[selectedDepartement]) {
+            if (selectedCommune === "" || entreprise in entreprisesParCommune[selectedCommune]) {
+                if (expression === "" || entreprise in entrepriseParPollution[expression]) {
+                    filteredEntreprises.push(entreprise);
+                }
+            }
+        }
+    });
+    // Mise à jour de la liste déroulante des entreprises
+    var outputEntreprise = "<option value=\"\">Choisissez une entreprise</option>";
+    filteredEntreprises.forEach(el => {
+        outputEntreprise += "<option>" + el + "</option>";
+    });
+    document.getElementById('filtreEntreprise').innerHTML = outputEntreprise;
+};
 
 //  Pour liste déroulante des entreprises
 var filtreEntreprise = document.getElementById("filtreEntreprise");
@@ -354,18 +583,14 @@ var filtreEntreprise = document.getElementById("filtreEntreprise");
 // ajout d'un événement lorsque l'on change la valeur dans la liste déroulante
 filtreEntreprise.addEventListener('change', function(event) {
 
-    // on enregistre la valeur sélectionnée
-    expression = filtreEntreprise.value;
-    //console.log(expression)
-
     // suppression de la couche basol affichée
     groupLayer.removeLayer(basolLayer);
     map.removeLayer(basolLayer);
-    var filtre = "nom_site"
-    var newGeoJson = creerDonnees(data, filtre, expression);
-
-    afficheDonneesCarte(newGeoJson, map);
+    
+    var newGeoJson = creerDonnees(data);
+    verifCheckbox(newGeoJson);
 });
+
 
 //Pour la barre de recherche
 var search = document.querySelector(".searchBar");
@@ -373,50 +598,37 @@ var search = document.querySelector(".searchBar");
 //Ajout d'un événement lorsque l'on change la valeur de l'input
 search.addEventListener('change', function(event) {
 
-    // on enregistre la valeur sélectionnée
-    expression = search.value;
-    //console.log(expression)
-
     // suppression de la couche basol affichée
     groupLayer.removeLayer(basolLayer);
     map.removeLayer(basolLayer);
-    var filtre = "descrip"
-    var newGeoJson = creerDonnees(data, filtre, expression);
-
-    afficheDonneesCarte(newGeoJson, map);
+    
+    creerDonnees(data);
 });
 
 // Ajout de la légende sur la cartographie
 var legend = L.control({ position: 'bottomright' });
 legend.onAdd = function(map) {
     var div = L.DomUtil.create('div', 'info legend');
-    label = ['<strong>Type de pollution</strong>'],
-        categories = ['Aucun', 'Micropolluants organiques', 'Chimique', 'Metaux et metalloides', 'Phytosanitaires', 'Element mineraux', 'Pharmaceutiques et hormones', 'Non renseigné', 'Informations incompletes', 'Pollution multiple'];
+    label = ['<strong>Type de polluant</strong>'],
+        categories = ['Micropolluants organiques', 'Chimique', 'Metaux et metalloides', 'Phytosanitaires', 'Element mineraux', 'Pharmaceutiques et hormones', 'Informations manquantes', 'Pollution multiple'];
     div.innerHTML = label.join() + '<br>';
     for (var i = 0; i < categories.length; i++) {
         div.innerHTML +=
             '<i style="background:' + basolcolor(categories[i]) + '"></i> ' +
-            categories[i].replace("Metaux","Métaux").replace("metalloides","métalloïdes").replace("Element mineraux","Éléments minéraux").replace("incompletes","incomplètes") + '<br>';
+            categories[i].replace("Metaux","Métaux").replace("metalloides","métalloïdes").replace("Element mineraux","Éléments minéraux") + '<br>';
     }
     return div;
 }
+
 legend.addTo(map); // ajout de la légende à la carte
 
-//déclaration d'une variable filtre0 qui corrspond au bouton "réinitialiser les filtres"
-var filtre0 = document.querySelector('.filterbutton');
+//Actualisation de la page quand l'utilisateur souhaite réinisitaliser les filtres (sûrement à modifier pour faire ça plus proprement)
+var reset = document.querySelector('.filterbutton');
 
-filtre0.addEventListener('click', function(nofilter) {
-    var newGeoJson;
-    document.querySelectorAll('select').forEach(function(e) {
-        e.value = "";
-        console.log(e.value);
-        var filtre = e.id.split("-")[1];
+reset.addEventListener('click', function() {
+    window.location.reload();
+});
 
-        newGeoJson = creerDonnees(data, filtre, "");
-        console.log(newGeoJson);
-    })
-    afficheDonneesCarte(newGeoJson, map);
-})
 
 // Script Alerte
 var error = document.querySelector('.error');

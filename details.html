@@ -148,8 +148,8 @@
         <h2>À propos de ce site web</h2>
         Site web créé dans le cadre de la thèse de doctorat de <a href="https://cv.hal.science/chuanming-dong">Chuanming
             Dong</a>, hébergé <a href="https://pages.github.com/">sur GitHub Pages</a>, code disponible sous licence
-        libre AGPL (contributions : I. Amri, S. Bodin, C. Dominguès, C. Dong, P. Gambette, R. Orly, N. Sebahoun ; plus
-        d'informations <a href="https://github.com/NoamSeb/Carto_IGN_LIGM">sur GitHub</a>).<br>
+        libre AGPL (contributions : I. Amri, S. Bodin, C. Dominguès, C. Dong, P. Gambette, R. Orly, N. Sebahoun, C. Sicot ; 
+        plus d'informations : <a href="https://clementsct.github.io/Carto_IGN_LIGM/">sur GitHub</a>).<br>
         Source des données : fichier <a
             href="https://www.data.gouv.fr/fr/datasets/base-des-sols-pollues/">BASOL.json</a>
         (données dérivées de la <a
@@ -214,13 +214,19 @@
                     code_postal = ' (' + objId.properties.code_act + ')';
                 }
                 
+                // Réunion des catégories dans la même (détails)
+                var classe = objId.properties.nom_classe
+                if(classe == 'Aucun' || classe == 'Non renseigné' || classe == 'Informations incompletes'){
+                    classe = 'Informations manquantes';
+                }
+
                 var ht = '<p>Entreprise : ' + objId.properties.nom_site + '</p>' + '</br>' +
                     '<p>Région : ' + objId.properties.region + '</p>' + '</br>' +
                     '<p>Commune : ' + objId.properties.commune + ' (' + objId.properties.dpt + ')' + '</p>' + '</br>' +
                     '<p>Adresse : ' + objId.properties.adresse + code_postal + '</p>' + '</br>' +
                     '<p>Activité : ' + objId.properties.activite + ' (' + objId.properties.code_act + ')' + '</p>' + '</br>' +
                     '<p> Description du site : ' + objId.properties.descrip + '</p>' + '</br>' +
-                    '<p>Polluants : ' + objId.properties.nom_classe + '</p>' + '</br>' +
+                    '<p>Polluants : ' + classe + '</p>' + '</br>' +
                     '<p>Type de pollution : ' + objId.properties.type_pollu.replace("{", "").replace("}", "").replace(/'/g, "") + '</p>' + '</br>' +
                     '<p>Origine de la pollution : ' + objId.properties.origine_pollution + '</p>';
                 document.getElementById("siteInfo").innerHTML = ht;
